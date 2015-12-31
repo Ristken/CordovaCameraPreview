@@ -601,7 +601,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         setMeasuredDimension(width, height);
 
         if (mSupportedPreviewSizes != null) {
-            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+            mPreviewSize = getLargestPreviewSize(mSupportedPreviewSizes, width, height);
         }
     }
 
@@ -716,6 +716,22 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         }
 
         Log.d(TAG, "optimal preview size: w: " + optimalSize.width + " h: " + optimalSize.height);
+        return optimalSize;
+    }
+
+    private Camera.Size getLargestPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+
+        optimalSize = sizes.get(0);
+        for (int i = 0; i < sizes.size(); i++) {
+            if (sizes.get(i).width > optimalSize.width) {
+                optimalSize = sizes.get(i);
+            }
+        }
+
+        Log.d(TAG, "largest preview size: w: " + optimalSize.width + " h: " + optimalSize.height);
         return optimalSize;
     }
 
