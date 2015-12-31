@@ -188,6 +188,20 @@ public class CameraActivity extends Fragment {
 	        });
         }
     }
+
+    public void refocusCamera()
+	{
+		getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mCamera.cancelAutoFocus();
+				mCamera.autoFocus(new Camera.AutoFocusCallback() {
+						@Override
+						public void onAutoFocus(boolean success, Camera camera) {}
+				});
+			}
+		});
+	}
 	
     private void setDefaultCameraId(){
 		
