@@ -530,6 +530,9 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
             setCameraDisplayOrientation();
             //mCamera.getParameters().setRotation(getDisplayOrientation());
             //requestLayout();
+            Camera.Parameters params = mCamera.getParameters();
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            mCamera.setParameters(params);
         }
     }
 
