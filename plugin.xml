@@ -34,11 +34,11 @@
     <config-file target="AndroidManifest.xml" parent="/manifest/application">
       <activity android:name="com.mbppower.CameraActivity" android:screenOrientation="portrait" android:theme="@style/CameraPreviewTheme" />
     </config-file>
-
     <source-file src="src/android/com/mbppower/CameraPreview.java" target-dir="src/com/mbppower" />
     <source-file src="src/android/com/mbppower/CameraActivity.java" target-dir="src/com/mbppower" />
     <source-file src="src/android/com/mbppower/camera_activity.xml" target-dir="res/layout" />
     <source-file src="src/android/com/mbppower/camera_theme.xml" target-dir="res/values" />
+    <source-file src="src/android/com/mbppower/camera_ids.xml" target-dir="res/values" />
 
   </platform>
 
