@@ -1,7 +1,9 @@
 package com.mbppower;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.res.Resources;
 import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -30,7 +32,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
 	private CameraActivity fragment;
 	private CallbackContext takePictureCallbackContext;
-	private int containerViewId = 9001;
+	private FrameLayout containerView;
 	public CameraPreview(){
 		super();
 		Log.d(TAG, "Constructing");
@@ -95,11 +97,13 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 					fragment.setRect(x, y, width, height);
 
 					//create or update the layout params for the container view
-					FrameLayout containerView = (FrameLayout)cordova.getActivity().findViewById(containerViewId);
-					if(containerView == null){
+					Activity activity = cordova.getActivity();
+					Resources resources = activity.getResources();
+					if (containerView == null) {
 						containerView = new FrameLayout(cordova.getActivity().getApplicationContext());
-						containerView.setId(containerViewId);
-
+						// Look up a view id we inject to ensure there are no conflicts
+						int cameraViewId = resources.getIdentifier(activity.getClass().getPackage().getName() + ":id/camera_container", null, null);
+						containerView.setId(cameraViewId);
 					}
 					//display camera bellow the webview
 					if (containerView.getParent() != webView.getView().getParent()) {
@@ -112,8 +116,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 					if(toBack){
 						webView.getView().setBackgroundColor(0x00000000);
 						((ViewGroup)webView.getView()).bringToFront();
-					}
-					else{
+					} else {
 						//set camera back to front
 						containerView.setAlpha(Float.parseFloat(args.getString(8)));
 						containerView.bringToFront();
