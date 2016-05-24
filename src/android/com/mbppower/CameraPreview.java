@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -29,7 +30,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
 	private CameraActivity fragment;
 	private CallbackContext takePictureCallbackContext;
-	private int containerViewId = 1;
+	private int containerViewId = 9001;
 	public CameraPreview(){
 		super();
 		Log.d(TAG, "Constructing");
@@ -99,10 +100,15 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 						containerView = new FrameLayout(cordova.getActivity().getApplicationContext());
 						containerView.setId(containerViewId);
 
-						FrameLayout.LayoutParams containerLayoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
-						cordova.getActivity().addContentView(containerView, containerLayoutParams);
 					}
 					//display camera bellow the webview
+					if (containerView.getParent() != webView.getView().getParent()) {
+						if (containerView.getParent() != null) {
+							((ViewGroup) containerView.getParent()).removeView(containerView);
+						}
+						FrameLayout.LayoutParams containerLayoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+						((ViewGroup) webView.getView().getParent()).addView(containerView, containerLayoutParams);
+					}
 					if(toBack){
 						webView.getView().setBackgroundColor(0x00000000);
 						((ViewGroup)webView.getView()).bringToFront();
