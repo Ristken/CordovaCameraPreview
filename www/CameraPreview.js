@@ -57,13 +57,7 @@ CameraPreview.stopCamera = function(){
 
 CameraPreview.takePicture = function(dim){
   dim = dim || {};
-  if(typeof(dim.maxWidth) === 'undefined'){
-    dim.maxWidth = window.device.width;
-  }
-  if(typeof(dim.maxHeight) === 'undefined'){
-    dim.maxHeight = window.device.height;
-  }
-  exec(null, null, PLUGIN_NAME, "takePicture", [dim.maxWidth, dim.maxHeight]);
+  exec(null, null, PLUGIN_NAME, "takePicture", [dim.maxWidth || 0, dim.maxHeight || 0]);
 };
 
 CameraPreview.setColorEffect = function(effect){
