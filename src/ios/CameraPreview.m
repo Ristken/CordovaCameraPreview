@@ -9,310 +9,265 @@
 
 - (void) startCamera:(CDVInvokedUrlCommand*)command {
 
-        CDVPluginResult *pluginResult;
+  CDVPluginResult *pluginResult;
 
-        if (self.sessionManager != nil) {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera already started!"];
-                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                return;
-        }
+  if (self.sessionManager != nil) {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera already started!"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    return;
+  }
 
-        if (command.arguments.count > 3) {
-                CGFloat x = (CGFloat)[command.arguments[0] floatValue] + self.webView.frame.origin.x;
-                CGFloat y = (CGFloat)[command.arguments[1] floatValue] + self.webView.frame.origin.y;
-                CGFloat width = (CGFloat)[command.arguments[2] floatValue];
-                CGFloat height = (CGFloat)[command.arguments[3] floatValue];
-                NSString *defaultCamera = command.arguments[4];
-                BOOL tapToTakePicture = (BOOL)[command.arguments[5] boolValue];
-                BOOL dragEnabled = (BOOL)[command.arguments[6] boolValue];
-                BOOL toBack = (BOOL)[command.arguments[7] boolValue];
-                // Create the session manager
-                self.sessionManager = [[CameraSessionManager alloc] init];
+  if (command.arguments.count > 3) {
+    CGFloat x = (CGFloat)[command.arguments[0] floatValue] + self.webView.frame.origin.x;
+    CGFloat y = (CGFloat)[command.arguments[1] floatValue] + self.webView.frame.origin.y;
+    CGFloat width = (CGFloat)[command.arguments[2] floatValue];
+    CGFloat height = (CGFloat)[command.arguments[3] floatValue];
+    NSString *defaultCamera = command.arguments[4];
+    BOOL tapToTakePicture = (BOOL)[command.arguments[5] boolValue];
+    BOOL dragEnabled = (BOOL)[command.arguments[6] boolValue];
+    BOOL toBack = (BOOL)[command.arguments[7] boolValue];
+    // Create the session manager
+    self.sessionManager = [[CameraSessionManager alloc] init];
 
-                //render controller setup
-                self.cameraRenderController = [[CameraRenderController alloc] init];
-                self.cameraRenderController.dragEnabled = dragEnabled;
-                self.cameraRenderController.tapToTakePicture = tapToTakePicture;
-                self.cameraRenderController.sessionManager = self.sessionManager;
-                self.cameraRenderController.view.frame = CGRectMake(x, y, width, height);
-                self.cameraRenderController.delegate = self;
+    //render controller setup
+    self.cameraRenderController = [[CameraRenderController alloc] init];
+    self.cameraRenderController.dragEnabled = dragEnabled;
+    self.cameraRenderController.tapToTakePicture = tapToTakePicture;
+    self.cameraRenderController.sessionManager = self.sessionManager;
+    self.cameraRenderController.view.frame = CGRectMake(x, y, width, height);
+    self.cameraRenderController.delegate = self;
 
-                [self.viewController addChildViewController:self.cameraRenderController];
-                //display the camera bellow the webview
-                if (toBack) {
-                        //make transparent
-                        self.webView.opaque = NO;
-                        self.webView.backgroundColor = [UIColor clearColor];
-                        [self.webView.superview insertSubview:self.cameraRenderController.view belowSubview:self.webView];
-                } else {
-                        self.cameraRenderController.view.alpha = (CGFloat)[command.arguments[8] floatValue];
-                        [self.webView.superview insertSubview:self.cameraRenderController.view aboveSubview:self.webView];
-                }
+    [self.viewController addChildViewController:self.cameraRenderController];
+    //display the camera bellow the webview
+    if (toBack) {
+      //make transparent
+      self.webView.opaque = NO;
+      self.webView.backgroundColor = [UIColor clearColor];
+      [self.webView.superview insertSubview:self.cameraRenderController.view belowSubview:self.webView];
+    }
+    else{
+      self.cameraRenderController.view.alpha = (CGFloat)[command.arguments[8] floatValue];
+      [self.webView.superview insertSubview:self.cameraRenderController.view aboveSubview:self.webView];
+    }
 
-                // Setup session
-                self.sessionManager.delegate = self.cameraRenderController;
-                [self.sessionManager setupSession:defaultCamera];
+    // Setup session
+    self.sessionManager.delegate = self.cameraRenderController;
+    [self.sessionManager setupSession:defaultCamera];
 
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid number of parameters"];
-        }
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid number of parameters"];
+  }
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void) stopCamera:(CDVInvokedUrlCommand*)command {
-        NSLog(@"stopCamera");
-        CDVPluginResult *pluginResult;
+  NSLog(@"stopCamera");
+  CDVPluginResult *pluginResult;
 
-        if(self.sessionManager != nil) {
-                [self.cameraRenderController.view removeFromSuperview];
-                [self.cameraRenderController removeFromParentViewController];
-                self.cameraRenderController = nil;
+  if(self.sessionManager != nil) {
+    [self.cameraRenderController.view removeFromSuperview];
+    [self.cameraRenderController removeFromParentViewController];
+    self.cameraRenderController = nil;
 
-                [self.sessionManager.session stopRunning];
-                self.sessionManager = nil;
+    [self.sessionManager.session stopRunning];
+    self.sessionManager = nil;
 
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        }
-        else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
-        }
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  }
+  else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+  }
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void) hideCamera:(CDVInvokedUrlCommand*)command {
-        NSLog(@"hideCamera");
-        CDVPluginResult *pluginResult;
+  NSLog(@"hideCamera");
+  CDVPluginResult *pluginResult;
 
-        if (self.cameraRenderController != nil) {
-                [self.cameraRenderController.view setHidden:YES];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
-        }
+  if (self.cameraRenderController != nil) {
+    [self.cameraRenderController.view setHidden:YES];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+  }
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void) showCamera:(CDVInvokedUrlCommand*)command {
-        NSLog(@"showCamera");
-        CDVPluginResult *pluginResult;
+  NSLog(@"showCamera");
+  CDVPluginResult *pluginResult;
 
-        if (self.cameraRenderController != nil) {
-                [self.cameraRenderController.view setHidden:NO];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
-        }
+  if (self.cameraRenderController != nil) {
+    [self.cameraRenderController.view setHidden:NO];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+  }
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void) switchCamera:(CDVInvokedUrlCommand*)command {
-        NSLog(@"switchCamera");
-        CDVPluginResult *pluginResult;
+  NSLog(@"switchCamera");
+  CDVPluginResult *pluginResult;
 
-        if (self.sessionManager != nil) {
-                [self.sessionManager switchCamera];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
-        }
+  if (self.sessionManager != nil) {
+    [self.sessionManager switchCamera];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+  }
 
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void) setFlashMode:(CDVInvokedUrlCommand*)command {
+  NSLog(@"Flash Mode");
+  CDVPluginResult *pluginResult;
+
+  NSInteger flashMode;
+  NSString *errMsg;
+
+  if (command.arguments.count <= 0)
+  {
+    errMsg = @"Please specify a flash mode";
+  }
+  else
+  {
+    NSString *strFlashMode = [command.arguments objectAtIndex:0];
+    flashMode = [strFlashMode integerValue];
+    if (flashMode != AVCaptureFlashModeOff
+        && flashMode != AVCaptureFlashModeOn
+        && flashMode != AVCaptureFlashModeAuto)
+    {
+      errMsg = @"Invalid parameter";
+    }
+
+  }
+
+  if (errMsg) {
+    NSLog(@"%@", errMsg);
+
+  } else {
+    if (self.sessionManager != nil) {
+      [self.sessionManager setFlashMode:flashMode];
+      pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    } else {
+      pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+    }
+  }
+
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (void) takePicture:(CDVInvokedUrlCommand*)command {
-        NSLog(@"takePicture");
-        CDVPluginResult *pluginResult;
+  NSLog(@"takePicture");
+  CDVPluginResult *pluginResult;
 
-        if (self.cameraRenderController != NULL) {
-                CGFloat maxW = (CGFloat)[command.arguments[0] floatValue];
-                CGFloat maxH = (CGFloat)[command.arguments[1] floatValue];
-                [self invokeTakePicture:maxW withHeight:maxH];
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
-                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        }
+  if (self.cameraRenderController != NULL) {
+    CGFloat maxW = (CGFloat)[command.arguments[0] floatValue];
+    CGFloat maxH = (CGFloat)[command.arguments[1] floatValue];
+    [self invokeTakePicture:maxW withHeight:maxH];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  }
 }
 
 -(void) setOnPictureTakenHandler:(CDVInvokedUrlCommand*)command {
-        NSLog(@"setOnPictureTakenHandler");
-        self.onPictureTakenHandlerId = command.callbackId;
+  NSLog(@"setOnPictureTakenHandler");
+  self.onPictureTakenHandlerId = command.callbackId;
 }
 
--(void) setColorEffect:(CDVInvokedUrlCommand*)command {
-        NSLog(@"setColorEffect");
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        NSString *filterName = command.arguments[0];
-
-        if ([filterName isEqual: @"none"]) {
-                dispatch_async(self.sessionManager.sessionQueue, ^{
-                        [self.sessionManager setCiFilter:nil];
-                });
-        } else if ([filterName isEqual: @"mono"]) {
-                dispatch_async(self.sessionManager.sessionQueue, ^{
-                        CIFilter *filter = [CIFilter filterWithName:@"CIColorMonochrome"];
-                        [filter setDefaults];
-                        [self.sessionManager setCiFilter:filter];
-                });
-        } else if ([filterName isEqual: @"negative"]) {
-                dispatch_async(self.sessionManager.sessionQueue, ^{
-                        CIFilter *filter = [CIFilter filterWithName:@"CIColorInvert"];
-                        [filter setDefaults];
-                        [self.sessionManager setCiFilter:filter];
-                });
-        } else if ([filterName isEqual: @"posterize"]) {
-                dispatch_async(self.sessionManager.sessionQueue, ^{
-                        CIFilter *filter = [CIFilter filterWithName:@"CIColorPosterize"];
-                        [filter setDefaults];
-                        [self.sessionManager setCiFilter:filter];
-                });
-        } else if ([filterName isEqual: @"sepia"]) {
-                dispatch_async(self.sessionManager.sessionQueue, ^{
-                        CIFilter *filter = [CIFilter filterWithName:@"CISepiaTone"];
-                        [filter setDefaults];
-                        [self.sessionManager setCiFilter:filter];
-                });
-        } else {
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Filter not found"];
-        }
-
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
 - (void) invokeTakePicture {
-        [self invokeTakePicture:0.0 withHeight:0.0];
+  [self invokeTakePicture:0.0 withHeight:0.0];
 }
+
 - (void) invokeTakePicture:(CGFloat) maxWidth withHeight:(CGFloat) maxHeight {
         AVCaptureConnection *connection = [self.sessionManager.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
         [self.sessionManager.stillImageOutput captureStillImageAsynchronouslyFromConnection:connection completionHandler:^(CMSampleBufferRef sampleBuffer, NSError *error) {
 
-                 NSLog(@"Done creating still image");
+          NSLog(@"Done creating still image");
 
-                 if (error) {
-                         NSLog(@"%@", error);
-                 } else {
-                         [self.cameraRenderController.renderLock lock];
-                         CIImage *previewCImage = self.cameraRenderController.latestFrame;
-                         CGImageRef previewImage = [self.cameraRenderController.ciContext createCGImage:previewCImage fromRect:previewCImage.extent];
-                         [self.cameraRenderController.renderLock unlock];
+          if (error) {
+            NSLog(@"%@", error);
+          } else {
+            NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:sampleBuffer];
+            UIImage *capturedImage  = [[UIImage alloc] initWithData:imageData];
 
-                         NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:sampleBuffer];
-                         UIImage *capturedImage  = [[UIImage alloc] initWithData:imageData];
+            capturedImage = [self imageCorrectedForCaptureOrientation:capturedImage];
 
-                         CIImage *capturedCImage;
-                         //image resize
+            NSString *originalPicture = [UIImageJPEGRepresentation(capturedImage, 0.75f) base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
 
-                         if(maxWidth > 0 && maxHeight > 0) {
-                                 CGFloat scaleHeight = maxWidth/capturedImage.size.height;
-                                 CGFloat scaleWidth = maxHeight/capturedImage.size.width;
-                                 CGFloat scale = scaleHeight > scaleWidth ? scaleWidth : scaleHeight;
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:originalPicture];
+            [pluginResult setKeepCallbackAsBool:true];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
+          }
+        }];
+}
 
-                                 CIFilter *resizeFilter = [CIFilter filterWithName:@"CILanczosScaleTransform"];
-                                 [resizeFilter setValue:[[CIImage alloc] initWithCGImage:[capturedImage CGImage]] forKey:kCIInputImageKey];
-                                 [resizeFilter setValue:[NSNumber numberWithFloat:1.0f] forKey:@"inputAspectRatio"];
-                                 [resizeFilter setValue:[NSNumber numberWithFloat:scale] forKey:@"inputScale"];
-                                 capturedCImage = [resizeFilter outputImage];
-                         }
-                         else{
-                                 capturedCImage = [[CIImage alloc] initWithCGImage:[capturedImage CGImage]];
-                         }
+- (UIImage*)imageCorrectedForCaptureOrientation:(UIImage *)sourceImage
+{
+  float rotation_radians = 0;
+  bool perpendicular = false;
+  UIImageOrientation imageOrientation = sourceImage.imageOrientation;
 
-                         CIImage *imageToFilter;
-                         CIImage *finalCImage;
+  switch (imageOrientation) {
+    case UIImageOrientationUp :
+      rotation_radians = 0.0;
+      break;
 
-                         //fix front mirroring
-                         if (self.sessionManager.defaultCamera == AVCaptureDevicePositionFront) {
-                                 CGAffineTransform matrix = CGAffineTransformTranslate(CGAffineTransformMakeScale(1, -1), 0, capturedCImage.extent.size.height);
-                                 imageToFilter = [capturedCImage imageByApplyingTransform:matrix];
-                         } else {
-                                 imageToFilter = capturedCImage;
-                         }
+    case UIImageOrientationDown:
+      rotation_radians = M_PI; // don't be scared of radians, if you're reading this, you're good at math
+      break;
 
-                         CIFilter *filter = [self.sessionManager ciFilter];
-                         if (filter != nil) {
-                                 [self.sessionManager.filterLock lock];
-                                 [filter setValue:imageToFilter forKey:kCIInputImageKey];
-                                 finalCImage = [filter outputImage];
-                                 [self.sessionManager.filterLock unlock];
-                         } else {
-                                 finalCImage = imageToFilter;
-                         }
+    case UIImageOrientationRight:
+      rotation_radians = M_PI_2;
+      perpendicular = true;
+      break;
 
-                         CGImageRef finalImage = [self.cameraRenderController.ciContext createCGImage:finalCImage fromRect:finalCImage.extent];
+    case UIImageOrientationLeft:
+      rotation_radians = -M_PI_2;
+      perpendicular = true;
+      break;
 
-                         ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+    default:
+      break;
+  }
 
-                         dispatch_group_t group = dispatch_group_create();
+  CGSize imageSize = sourceImage.size;
+  CGFloat imageWidth = imageSize.width;
+  CGFloat imageHeight = imageSize.height;
 
-                         __block NSString *originalPicturePath;
-                         __block NSString *previewPicturePath;
-                         __block NSError *photosAlbumError;
+  UIGraphicsBeginImageContext(CGSizeMake(imageWidth, imageHeight));
+  CGContextRef context = UIGraphicsGetCurrentContext();
 
-                         ALAssetOrientation orientation;
-                         switch ([[UIApplication sharedApplication] statusBarOrientation]) {
-                         case UIDeviceOrientationPortraitUpsideDown:
-                                 orientation = ALAssetOrientationLeft;
-                                 break;
-                         case UIDeviceOrientationLandscapeLeft:
-                                 orientation = ALAssetOrientationUp;
-                                 break;
-                         case UIDeviceOrientationLandscapeRight:
-                                 orientation = ALAssetOrientationDown;
-                                 break;
-                         case UIDeviceOrientationPortrait:
-                         default:
-                                 orientation = ALAssetOrientationRight;
-                         }
+  // Rotate around the center point
+  CGContextTranslateCTM(context, imageWidth / 2, imageHeight / 2);
+  CGContextRotateCTM(context, rotation_radians);
 
-                         // task 1
-                         dispatch_group_enter(group);
-                         [library writeImageToSavedPhotosAlbum:previewImage orientation:ALAssetOrientationUp completionBlock:^(NSURL *assetURL, NSError *error) {
-                                  if (error) {
-                                          NSLog(@"FAILED to save Preview picture.");
-                                          photosAlbumError = error;
-                                  } else {
-                                          previewPicturePath = [assetURL absoluteString];
-                                          NSLog(@"previewPicturePath: %@", previewPicturePath);
-                                  }
-                                  dispatch_group_leave(group);
-                          }];
+  CGContextScaleCTM(context, 1.0, -1.0);
+  float width = perpendicular ? imageHeight : imageWidth;
+  float height = perpendicular ? imageWidth : imageHeight;
 
-                         //task 2
-                         dispatch_group_enter(group);
-                         [library writeImageToSavedPhotosAlbum:finalImage orientation:orientation completionBlock:^(NSURL *assetURL, NSError *error) {
-                                  if (error) {
-                                          NSLog(@"FAILED to save Original picture.");
-                                          photosAlbumError = error;
-                                  } else {
-                                          originalPicturePath = [assetURL absoluteString];
-                                          NSLog(@"originalPicturePath: %@", originalPicturePath);
-                                  }
-                                  dispatch_group_leave(group);
-                          }];
+  // flip image if front camera
+  if (self.sessionManager.defaultCamera == AVCaptureDevicePositionFront) {
+    CGContextScaleCTM(context, 1.0f, -1.0f);
+  }
 
-                         dispatch_group_notify(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-                                NSMutableArray *params = [[NSMutableArray alloc] init];
-                                if (photosAlbumError) {
-                                        // Error returns just one element in the returned array
-                                        NSString * remedy = @"";
-                                        if (-3311 == [photosAlbumError code]) {
-                                                remedy = @"Go to Settings > CodeStudio and allow access to Photos";
-                                        }
-                                        [params addObject:[NSString stringWithFormat:@"CameraPreview: %@ - %@ — %@", [photosAlbumError localizedDescription], [photosAlbumError localizedFailureReason], remedy]];
-                                } else {
-                                        // Success returns two elements in the returned array
-                                        [params addObject:originalPicturePath];
-                                        [params addObject:previewPicturePath];
-                                }
+  CGContextDrawImage(context, CGRectMake(-width / 2, -height / 2, width, height), [sourceImage CGImage]);
 
-                                CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:params];
-                                [pluginResult setKeepCallbackAsBool:true];
-                                [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
-                        });
-                 }
-         }];
+  // Move the origin back since the rotation might've change it (if its 90 degrees)
+  if (perpendicular) {
+    CGContextTranslateCTM(context, -imageHeight / 2, -imageWidth / 2);
+  }
+
+  UIImage* newImage = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+  return newImage;
 }
 @end
