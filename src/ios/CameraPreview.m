@@ -46,7 +46,7 @@
                         [self.webView.superview insertSubview:self.cameraRenderController.view belowSubview:self.webView];
                 } else {
                         self.cameraRenderController.view.alpha = (CGFloat)[command.arguments[8] floatValue];
-                        [self.webView.superview insertSubview:self.cameraRenderController.view belowSubview:self.webView];
+                        [self.webView.superview insertSubview:self.cameraRenderController.view aboveSubview:self.webView];
                 }
 
                 // Setup session
