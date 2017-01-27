@@ -1,8 +1,11 @@
-Cordova CameraPreview Plugin
+cordova-plugin-camera-preview
 ====================
 
-Cordova plugin that allows camera interaction from HTML code.<br/>
-Show camera preview popup on top of the HTML.<br/>
+Cordova plugin that allows camera interaction from HTML code for showing camera preview below or above the HTML.<br/>
+
+**June 13, 2016 - I dont have any time to work on this recently. If people want to contribute lets get a good working version over here [westonganger/cordova-plugin-camera-preview](https://github.com/westonganger/cordova-plugin-camera-preview/tree/skanygin) with some additional features and nicer API that would be great. Then we can get it merged back to master on this repo.**
+
+**May 18, 2016 - Current development to get a decent stable updated version is happening on the fork [westonganger/cordova-plugin-camera-preview](https://github.com/westonganger/cordova-plugin-camera-preview/tree/skanygin). This will be merged into master here once its working. Please direct all pull requests over there until further notice.**
 
 <p><b>Features:</b></p>
 <ul>
@@ -19,85 +22,84 @@ Show camera preview popup on top of the HTML.<br/>
 <p><b>Installation:</b></p>
 
 ```
-cordova plugin add cordova-plugin-camera-preview
-```
-
-```
-ionic plugin add cordova-plugin-camera-preview
+cordova plugin add https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview.git
 ```
 
 <b>Phonegap Build:</b><br/>
 
-```xml
+```
 <gap:plugin name="cordova-plugin-camera-preview" />
 ```
 
 <p><b>Methods:</b></p>
 
-<b>startCamera()</b><br/>
-<info>
-Starts the camera preview instance.
-<br/>
-<br/>
-When setting the toBack to TRUE, remember to add the style bellow on your app's HTML or body element:
-```css
-html, body{
-  background-color: transparent;
-}
+
+  <b>startCamera(rect, defaultCamera, tapEnabled, dragEnabled, toBack)</b><br/>
+  <info>
+  	Starts the camera preview instance.
+  	<br/>
+	<br/>
+	When setting the toBack to TRUE, remember to add the style bellow on your app's HTML body element:
+```
+style="background-color='transparent'"
 ```
 </info>
 
 Javascript:
 
-```javascript
-/* All options stated are optional and will default to values here */
-CameraPreview.startCamera({x: 0, y: 0, width: window.device.width, height: window.device.height, camera: "front", tapPhoto: true, previewDrag: false, toBack: false);
+```
+var tapEnabled = true; //enable tap take picture
+var dragEnabled = true; //enable preview box drag across the screen
+var toBack = true; //send preview box to the back of the webview
+var rect = {x: 100, y: 100, width: 200, height:200};
+cordova.plugins.camerapreview.startCamera(rect, "front", tapEnabled, dragEnabled, toBack)
 ```
 
 <b>stopCamera()</b><br/>
 <info>Stops the camera preview instance.</info><br/>
 
-```javascript
-CameraPreview.stopCamera();
+```
+cordova.plugins.camerapreview.stopCamera();
 ```
 
 <b>takePicture(size)</b><br/>
 <info>Take the picture, the parameter size is optional</info><br/>
 
-```javascript
-CameraPreview.takePicture({maxWidth:640, maxHeight:640});
+```
+cordova.plugins.camerapreview.takePicture({maxWidth:640, maxHeight:640});
 ```
 
 
 <b>setOnPictureTakenHandler(callback)</b><br/>
 <info>Register a callback function that receives the original picture and the image captured from the preview box.</info><br/>
 
-```javascript
-CameraPreview.setOnPictureTakenHandler(function(result){
-  document.getElementById('originalPicture').src = result[0]; //originalPicturePath;
-  document.getElementById('previewPicture').src = result[1]; //previewPicturePath;
+```
+cordova.plugins.camerapreview.setOnPictureTakenHandler(function(result){
+	document.getElementById('originalPicture').src = result[0];//originalPicturePath;
+	document.getElementById('previewPicture').src = result[1];//previewPicturePath;
 });
 ```
+
 
 <b>switchCamera()</b><br/>
 <info>Switch from the rear camera and front camera, if available.</info><br/>
 
-```javascript
-CameraPreview.switchCamera();
+```
+cordova.plugins.camerapreview.switchCamera();
 ```
 
 <b>show()</b><br/>
 <info>Show the camera preview box.</info><br/>
 
-```javascript
-CameraPreview.show();
+```
+cordova.plugins.camerapreview.show();
 ```
 
 <b>hide()</b><br/>
 <info>Hide the camera preview box.</info><br/>
 
-```javasript
-CameraPreview.hide();
+```
+cordova.plugins.camerapreview.hide();
 ```
 
 <b>Base64 image:</b><br/>
@@ -105,17 +107,9 @@ Use the cordova-file in order to read the picture file and them get the base64.<
 Please, refer to this documentation: http://docs.phonegap.com/en/edge/cordova_file_file.md.html<br/>
 Method <i>readAsDataURL</i>: Read file and return data as a base64-encoded data URL.
 
-
-<b>IOS Quirks:</b><br/>
-It is not possible to use your computers webcam during testing in the simulator, you must device test.
-
-
 <b>Sample:</b><br/>
-Cordova: <a href="https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview-sample-app">cordova-plugin-camera-preview-sample-app</a> for a complete working Cordova example for Android and iOS platforms.
-
-
-Ionic: <a href="https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-ionic-preview-sample-app">cordova-plugin-camera-preview-ionic-sample-app</a> for a complete working Ionic example for Android and iOS platforms.
+Please see the <a href="https://github.com/mbppower/CordovaCameraPreviewApp">CordovaCameraPreviewApp</a> for a complete working example for Android and iOS platforms.
 
 <p><b>Android Screenshots:</b></p>
-<p><img src="https://raw.githubusercontent.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview/master/docs/img/android-1.png"/></p>
-<p><img src="https://raw.githubusercontent.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview/master/docs/img/android-2.png"/></p>
+<p><img src="https://raw.githubusercontent.com/mbppower/CordovaCameraPreview/master/docs/img/android-1.png"/></p>
+<p><img src="https://raw.githubusercontent.com/mbppower/CordovaCameraPreview/master/docs/img/android-2.png"/></p>

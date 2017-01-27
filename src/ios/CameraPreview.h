@@ -11,10 +11,10 @@
 - (void) stopCamera:(CDVInvokedUrlCommand*)command;
 - (void) showCamera:(CDVInvokedUrlCommand*)command;
 - (void) hideCamera:(CDVInvokedUrlCommand*)command;
-- (void) setFlashMode:(CDVInvokedUrlCommand*)command;
 - (void) switchCamera:(CDVInvokedUrlCommand*)command;
 - (void) takePicture:(CDVInvokedUrlCommand*)command;
 - (void) setOnPictureTakenHandler:(CDVInvokedUrlCommand*)command;
+- (void) setColorEffect:(CDVInvokedUrlCommand*)command;
 
 - (void) invokeTakePicture:(CGFloat) maxWidth withHeight:(CGFloat) maxHeight;
 - (void) invokeTakePicture;
