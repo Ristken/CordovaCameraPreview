@@ -7,18 +7,14 @@ import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
 import org.apache.cordova.PermissionHelper;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
-
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -63,6 +59,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
             return callStartCamera(args, callbackContext);
         }
         else if (takePictureAction.equals(action)){
+
             return takePicture(args, callbackContext);
         }
         else if (setColorEffectAction.equals(action)){
@@ -80,7 +77,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
         else if (switchCameraAction.equals(action)){
             return switchCamera(args, callbackContext);
         }
-
         return false;
     }
 

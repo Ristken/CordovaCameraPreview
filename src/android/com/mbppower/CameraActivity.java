@@ -188,7 +188,7 @@ public class CameraActivity extends Fragment {
 	        });
         }
     }
-	
+
     private void setDefaultCameraId(){
 		
 		// Find the total number of cameras available
@@ -322,12 +322,13 @@ public class CameraActivity extends Fragment {
     }
 	
 	public void takePicture(final double maxWidth, final double maxHeight){
+
+
 		final ImageView pictureView = (ImageView) view.findViewById(getResources().getIdentifier("picture_view", "id", appResourcesPackage));
 		if(mPreview != null) {
 			
 			if(!canTakePicture)
 				return;
-			
 			canTakePicture = false;
 
 			mPreview.setOneShotPreviewCallback(new Camera.PreviewCallback() {
@@ -342,55 +343,10 @@ public class CameraActivity extends Fragment {
 							byte[] bytes = mPreview.getFramePicture(data, camera);
 							final Bitmap pic = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-							//scale down
-							float scale = (float)pictureView.getWidth()/(float)pic.getWidth();
-							Bitmap scaledBitmap = Bitmap.createScaledBitmap(pic, (int)(pic.getWidth()*scale), (int)(pic.getHeight()*scale), false);
-
-							final Matrix matrix = new Matrix();
-							if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-								Log.d(TAG, "mirror y axis");
-								matrix.preScale(-1.0f, 1.0f);
-							}
-							Log.d(TAG, "preRotate " + mPreview.getDisplayOrientation() + "deg");
-							matrix.postRotate(mPreview.getDisplayOrientation());
-
-							final Bitmap fixedPic = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, false);
-							final Rect rect = new Rect(mPreview.mSurfaceView.getLeft(), mPreview.mSurfaceView.getTop(), mPreview.mSurfaceView.getRight(), mPreview.mSurfaceView.getBottom());
-
 							getActivity().runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									pictureView.setImageBitmap(fixedPic);
-									pictureView.layout(rect.left, rect.top, rect.right, rect.bottom);
-
-									Bitmap finalPic = null;
-									// If we are going to rotate the picture, width and height are reversed
-									boolean swapAspects = mPreview.getDisplayOrientation() % 180 != 0;
-									double rotatedWidth = swapAspects ? pic.getHeight() : pic.getWidth();
-									double rotatedHeight = swapAspects ? pic.getWidth() : pic.getHeight();
-									boolean shouldScaleWidth = maxWidth > 0 && rotatedWidth > maxWidth;
-									boolean shouldScaleHeight = maxHeight > 0 && rotatedHeight > maxHeight;
-
-									//scale final picture
-									if(shouldScaleWidth || shouldScaleHeight){
-										double scaleHeight = shouldScaleHeight ? maxHeight / (double)rotatedHeight : 1;
-										double scaleWidth = shouldScaleWidth ? maxWidth / (double)rotatedWidth : 1;
-
-										double scale = scaleHeight < scaleWidth ? scaleHeight : scaleWidth;
-										finalPic = Bitmap.createScaledBitmap(pic, (int)(pic.getWidth()*scale), (int)(pic.getHeight()*scale), false);
-									}
-									else{
-										finalPic = pic;
-									}
-
-									Bitmap originalPicture = Bitmap.createBitmap(finalPic, 0, 0, (int)(finalPic.getWidth()), (int)(finalPic.getHeight()), matrix, false);
-
-								    //get bitmap and compress
-								    Bitmap picture = loadBitmapFromView(view.findViewById(getResources().getIdentifier("frame_camera_cont", "id", appResourcesPackage)));
-								    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-								    picture.compress(Bitmap.CompressFormat.PNG, 80, stream);
-
-									generatePictureFromView(originalPicture, picture);
+									generatePictureFromView(pic);
 									canTakePicture = true;
 								}
 							});
@@ -403,7 +359,7 @@ public class CameraActivity extends Fragment {
 			canTakePicture = true;
 		}
 	}
-    private void generatePictureFromView(final Bitmap originalPicture, final Bitmap picture){
+    private void generatePictureFromView(final Bitmap picture){
 
 	    final FrameLayout cameraLoader = (FrameLayout)view.findViewById(getResources().getIdentifier("camera_loader", "id", appResourcesPackage));
 	    cameraLoader.setVisibility(View.VISIBLE);
@@ -413,7 +369,7 @@ public class CameraActivity extends Fragment {
 
 			    try {
 				    final File picFile = storeImage(picture, "_preview");
-				    final File originalPictureFile = storeImage(originalPicture, "_original");
+				    final File originalPictureFile = storeImage(picture, "_original");
 
 					eventListener.onPictureTaken(originalPictureFile.getAbsolutePath(), picFile.getAbsolutePath());
 
@@ -540,6 +496,9 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         if (mCamera != null) {
             mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
             setCameraDisplayOrientation();
+            Camera.Parameters params = mCamera.getParameters();
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            mCamera.setParameters(params);
             //mCamera.getParameters().setRotation(getDisplayOrientation());
             //requestLayout();
         }
@@ -613,7 +572,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         setMeasuredDimension(width, height);
 
         if (mSupportedPreviewSizes != null) {
-            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+			mPreviewSize = getLargestPreviewSize(mSupportedPreviewSizes, width, height);
         }
     }
 
@@ -730,6 +689,22 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         Log.d(TAG, "optimal preview size: w: " + optimalSize.width + " h: " + optimalSize.height);
         return optimalSize;
     }
+
+	private Camera.Size getLargestPreviewSize(List<Camera.Size> sizes, int w, int h) {
+		if (sizes == null) return null;
+
+		Camera.Size optimalSize = null;
+
+		optimalSize = sizes.get(0);
+		for (int i = 0; i < sizes.size(); i++) {
+			if (sizes.get(i).width > optimalSize.width) {
+				optimalSize = sizes.get(i);
+			}
+		}
+
+		Log.d(TAG, "largest preview size: w: " + optimalSize.width + " h: " + optimalSize.height);
+		return optimalSize;
+	}
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
 	    if(mCamera != null) {
