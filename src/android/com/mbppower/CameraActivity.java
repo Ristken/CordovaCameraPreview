@@ -343,10 +343,20 @@ public class CameraActivity extends Fragment {
 							byte[] bytes = mPreview.getFramePicture(data, camera);
 							final Bitmap pic = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
+                            final Matrix matrix = new Matrix();
+                            if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                                Log.d(TAG, "mirror y axis");
+                                matrix.preScale(-1.0f, 1.0f);
+                            }
+                            Log.d(TAG, "preRotate " + mPreview.getDisplayOrientation() + "deg");
+                            matrix.postRotate(mPreview.getDisplayOrientation());
+
+                            final Bitmap fixedPic = Bitmap.createBitmap(pic, 0, 0, pic.getWidth(), pic.getHeight(), matrix, false);
+
 							getActivity().runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									generatePictureFromView(pic);
+									generatePictureFromView(fixedPic);
 									canTakePicture = true;
 								}
 							});
