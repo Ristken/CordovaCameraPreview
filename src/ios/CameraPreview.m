@@ -182,6 +182,66 @@
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
+
+- (double)radiansFromUIImageOrientation:(UIImageOrientation)orientation {
+    double radians;
+    
+    switch ([[UIApplication sharedApplication] statusBarOrientation]) {
+        case UIDeviceOrientationPortrait:
+            radians = M_PI_2;
+            break;
+        case UIDeviceOrientationLandscapeLeft:
+            radians = 0.f;
+            break;
+        case UIDeviceOrientationLandscapeRight:
+            radians = M_PI;
+            break;
+        case UIDeviceOrientationPortraitUpsideDown:
+            radians = -M_PI_2;
+            break;
+    }
+    
+    return radians;
+}
+
+-(CGImageRef) CGImageRotated:(CGImageRef) originalCGImage withRadians:(double) radians {
+    CGSize imageSize = CGSizeMake(CGImageGetWidth(originalCGImage), CGImageGetHeight(originalCGImage));
+    CGSize rotatedSize;
+    if (radians == M_PI_2 || radians == -M_PI_2) {
+        rotatedSize = CGSizeMake(imageSize.height, imageSize.width);
+    } else {
+        rotatedSize = imageSize;
+    }
+    
+    double rotatedCenterX = rotatedSize.width / 2.f;
+    double rotatedCenterY = rotatedSize.height / 2.f;
+    
+    UIGraphicsBeginImageContextWithOptions(rotatedSize, NO, 1.f);
+    CGContextRef rotatedContext = UIGraphicsGetCurrentContext();
+    if (radians == 0.f || radians == M_PI) { // 0 or 180 degrees
+        CGContextTranslateCTM(rotatedContext, rotatedCenterX, rotatedCenterY);
+        if (radians == 0.0f) {
+            CGContextScaleCTM(rotatedContext, 1.f, -1.f);
+        } else {
+            CGContextScaleCTM(rotatedContext, -1.f, 1.f);
+        }
+        CGContextTranslateCTM(rotatedContext, -rotatedCenterX, -rotatedCenterY);
+    } else if (radians == M_PI_2 || radians == -M_PI_2) { // +/- 90 degrees
+        CGContextTranslateCTM(rotatedContext, rotatedCenterX, rotatedCenterY);
+        CGContextRotateCTM(rotatedContext, radians);
+        CGContextScaleCTM(rotatedContext, 1.f, -1.f);
+        CGContextTranslateCTM(rotatedContext, -rotatedCenterY, -rotatedCenterX);
+    }
+    
+    CGRect drawingRect = CGRectMake(0.f, 0.f, imageSize.width, imageSize.height);
+    CGContextDrawImage(rotatedContext, drawingRect, originalCGImage);
+    CGImageRef rotatedCGImage = CGBitmapContextCreateImage(rotatedContext);
+    
+    UIGraphicsEndImageContext();
+    
+    return rotatedCGImage;
+}
+
 - (void) invokeTakePicture {
         [self invokeTakePicture:0.0 withHeight:0.0];
 }
@@ -242,77 +302,44 @@
                          }
 
                          CGImageRef finalImage = [self.cameraRenderController.ciContext createCGImage:finalCImage fromRect:finalCImage.extent];
+                         UIImage *resultImage = [UIImage imageWithCGImage:finalImage];
+                         
+                         double radians = [self radiansFromUIImageOrientation:resultImage.imageOrientation];
+                         CGImageRef resultFinalImage = [self CGImageRotated:finalImage withRadians:radians];
+                         
+                         CGImageRelease(finalImage); // release CGImageRef to remove memory leaks
 
                          ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
 
-                         dispatch_group_t group = dispatch_group_create();
-
                          __block NSString *originalPicturePath;
-                         //__block NSString *previewPicturePath;
                          __block NSError *photosAlbumError;
 
-                         ALAssetOrientation orientation;
-                         switch ([[UIApplication sharedApplication] statusBarOrientation]) {
-                         case UIDeviceOrientationPortraitUpsideDown:
-                                 orientation = ALAssetOrientationLeft;
-                                 break;
-                         case UIDeviceOrientationLandscapeLeft:
-                                 orientation = ALAssetOrientationUp;
-                                 break;
-                         case UIDeviceOrientationLandscapeRight:
-                                 orientation = ALAssetOrientationDown;
-                                 break;
-                         case UIDeviceOrientationPortrait:
-                         default:
-                                 orientation = ALAssetOrientationRight;
-                         }
-
-                     /*
-                         // task 1
-                         dispatch_group_enter(group);
-                         [library writeImageToSavedPhotosAlbum:previewImage orientation:ALAssetOrientationUp completionBlock:^(NSURL *assetURL, NSError *error) {
-                                  if (error) {
-                                          NSLog(@"FAILED to save Preview picture.");
-                                          photosAlbumError = error;
-                                  } else {
-                                          previewPicturePath = [assetURL absoluteString];
-                                          NSLog(@"previewPicturePath: %@", previewPicturePath);
-                                  }
-                                  dispatch_group_leave(group);
-                          }];
-*/
-                         //task 2
-                         dispatch_group_enter(group);
-                         [library writeImageToSavedPhotosAlbum:finalImage orientation:orientation completionBlock:^(NSURL *assetURL, NSError *error) {
+                         [library writeImageToSavedPhotosAlbum:resultFinalImage orientation:ALAssetOrientationUp completionBlock:^(NSURL *assetURL, NSError *error) {
+                                  NSMutableArray *params = [[NSMutableArray alloc] init];
                                   if (error) {
                                           NSLog(@"FAILED to save Original picture.");
                                           photosAlbumError = error;
+                                      
+                                          // Error returns just one element in the returned array
+                                          NSString * remedy = @"";
+                                          if (-3311 == [photosAlbumError code]) {
+                                              remedy = @"Go to Settings > CodeStudio and allow access to Photos";
+                                          }
+                                          [params addObject:[NSString stringWithFormat:@"CameraPreview: %@ - %@ — %@", [photosAlbumError localizedDescription], [photosAlbumError localizedFailureReason], remedy]];
                                   } else {
                                           originalPicturePath = [assetURL absoluteString];
                                           NSLog(@"originalPicturePath: %@", originalPicturePath);
+                                          [params addObject:originalPicturePath];
+
                                   }
-                                  dispatch_group_leave(group);
+                             
+                                 CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:params];
+                                 [pluginResult setKeepCallbackAsBool:true];
+                                 [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
+
                           }];
-
-                         dispatch_group_notify(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-                                NSMutableArray *params = [[NSMutableArray alloc] init];
-                                if (photosAlbumError) {
-                                        // Error returns just one element in the returned array
-                                        NSString * remedy = @"";
-                                        if (-3311 == [photosAlbumError code]) {
-                                                remedy = @"Go to Settings > CodeStudio and allow access to Photos";
-                                        }
-                                        [params addObject:[NSString stringWithFormat:@"CameraPreview: %@ - %@ — %@", [photosAlbumError localizedDescription], [photosAlbumError localizedFailureReason], remedy]];
-                                } else {
-                                        // Success returns two elements in the returned array
-                                        [params addObject:originalPicturePath];
-                                        //[params addObject:previewPicturePath];
-                                }
-
-                                CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:params];
-                                [pluginResult setKeepCallbackAsBool:true];
-                                [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
-                        });
+                     
+                        CGImageRelease(resultFinalImage); // release CGImageRef to remove memory leaks
                  }
          }];
 }
