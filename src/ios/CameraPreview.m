@@ -62,6 +62,7 @@
 }
 
 - (void) stopCamera:(CDVInvokedUrlCommand*)command {
+    [self.commandDelegate runInBackground:^{
         NSLog(@"stopCamera");
         CDVPluginResult *pluginResult;
 
@@ -80,6 +81,7 @@
         }
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void) hideCamera:(CDVInvokedUrlCommand*)command {
